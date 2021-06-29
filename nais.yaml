@@ -6,7 +6,7 @@ metadata:
   name: status
   namespace: aura
 spec:
-  image: ghcr.io/nais/status:latest
+  image: {{ image }}
   ingresses:
     - https://status.{{ cluster }}.nais.io
   readiness:
