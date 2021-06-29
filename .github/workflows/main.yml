@@ -18,23 +18,19 @@ jobs:
           echo ${GITHUB_TOKEN} | docker login ghcr.io --username ${GITHUB_REPOSITORY} --password-stdin
           docker image push ${docker_image}
   deploy:
-    name: Deploy to NAIS
+    name: Deploy to NAIS prod clusters
     needs: build
     if: github.ref == 'refs/heads/main'
+    strategy:
+      matrix:
+        cluster: ["prod-gcp", "prod-fss", "prod-sbs"]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
-      - name: deploy to dev
+      - name: deploy to ${{ matrix.cluster }}
         uses: nais/deploy/actions/deploy@v1
         env:
           APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-          CLUSTER: dev-gcp
+          CLUSTER: ${{ matrix.cluster }}
           RESOURCE: nais.yaml
-          VAR: image=${{ env.docker_image }},cluster=dev-gcp
-      - name: deploy to prod
-        uses: nais/deploy/actions/deploy@v1
-        env:
-          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
-          CLUSTER: prod-gcp
-          RESOURCE: nais.yaml
-          VAR: image=${{ env.docker_image }},cluster=prod-gcp
+          VAR: image=${{ env.docker_image }},cluster=${{ matrix.cluster }}
