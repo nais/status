@@ -1,0 +1,40 @@
+name: Build and deploy
+on: push
+
+env:
+  docker_image: ghcr.io/nais/status:${{ github.sha }}
+
+jobs:
+  build:
+    name: Build Docker container
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: Build and publish Docker image
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          docker image build --tag ${docker_image} .
+          echo ${GITHUB_TOKEN} | docker login ghcr.io --username ${GITHUB_REPOSITORY} --password-stdin
+          docker image push ${docker_image}
+  deploy:
+    name: Deploy to NAIS
+    needs: build
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v1
+      - name: deploy to dev
+        uses: nais/deploy/actions/deploy@v1
+        env:
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: dev-gcp
+          RESOURCE: nais.yaml
+          VAR: image=${{ env.docker_image }},cluster=dev-gcp
+      - name: deploy to prod
+        uses: nais/deploy/actions/deploy@v1
+        env:
+          APIKEY: ${{ secrets.NAIS_DEPLOY_APIKEY }}
+          CLUSTER: prod-gcp
+          RESOURCE: nais.yaml
+          VAR: image=${{ env.docker_image }},cluster=prod-gcp
