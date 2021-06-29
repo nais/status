@@ -17,6 +17,7 @@ type statusResponse struct {
 	Description string `json:"description"`
 	Team        string `json:"team"`
 	Status      string `json:"status"`
+	Dashboard   string `json:"dashboard"`
 }
 
 var (
@@ -40,6 +41,7 @@ func main() {
 			Description: fmt.Sprintf("NAIS status in cluster %s", clusterName),
 			Team:        "aura",
 			Status:      "ok",
+			Dashboard:   fmt.Sprintf("https://grafana.nais.io/d/0nmGteKmz/nais-cluster?var-cluster=%s", clusterName),
 		}
 		if err := json.NewEncoder(w).Encode(status); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
